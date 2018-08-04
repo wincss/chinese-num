@@ -1,50 +1,61 @@
 #coding=utf-8
 
-from itertools import count
+from itertools import count, dropwhile
 
-def get_chinese(num):
-    digit = u'零一两三四五六七八九'
+def get_chinese(num, alt_2=True):
+    digit = u'零一二三四五六七八九'
     subunit = [u'', u'十', u'百', u'千']
     unit = ((u'万' * n).replace(u'万万', u'亿')[::-1] for n in count(0))
+    alt_2_char = u'两'
 
     result = []
 
-    addzero = False
     while num > 0:
-        if addzero:
-            result.append(digit[0])
-        result.append(unit.next())
-        subnum = num % 10000
-        num = num / 10000
+        subnum = int(num % 10000)
+        num = num // 10000
+        current_unit = next(unit)
 
+        # 10000 -> 一万
+        if subnum == 0:
+            continue
+
+        result.append(current_unit)
         digits = [int(b) for b in reversed(str(subnum))]
-        digitandbase = zip(digits, subunit)
-        hasnum = False
-        lastzero = False
-        for d, u in digitandbase:
-            if d == 0:
-                if hasnum and not lastzero:
-                    result.append(digit[0])
-                lastzero = True
-            else:
-                hasnum = True
-                lastzero = False
+        dupzero = False
+        for d, u in dropwhile(lambda x: x[0] == 0, zip(digits, subunit)):
+            if d > 0:
                 result.append(u)
-                if d == 2 and (u == u'十' or u == u''):
-                    result.append(u'二')
-                else:
-                    result.append(digit[d])
-        addzero = len(digitandbase) < 4
+            elif dupzero:
+                # 3005 -> 三千零五
+                continue
+            else:
+                dupzero = True
 
-        if result[-2:] == [u'十', u'一']:
+            if alt_2 and d == 2 and (u == subunit[3] or u == subunit[0] and current_unit):
+                # 20220 -> 两万零二百二十
+                result.append(alt_2_char)
+            else:
+                result.append(digit[d])
+
+        if len(digits) < 4 and num > 0:
+            # 20005 -> 两万零五
+            result.append(digit[0])
+
+        if digits[1:] == [1] and num == 0:
+            # 10 -> 十
             result.pop()
 
     return u''.join(reversed(result))
 
 if __name__ == '__main__':
+    try:
+        input = raw_input
+    except NameError:
+        pass
+
     while True:
         try:
-            num = int(raw_input())
+            num = int(input())
         except (ValueError, EOFError, KeyboardInterrupt):
             break
-        print get_chinese(num)
+        print(get_chinese(num))
