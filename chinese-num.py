@@ -31,7 +31,7 @@ def get_chinese(num, alt_2=True):
             else:
                 dupzero = True
 
-            if alt_2 and d == 2 and (u == subunit[3] or u == subunit[0] and current_unit):
+            if alt_2 and d == 2 and (u == subunit[3] or current_unit and subnum == 2):
                 # 20220 -> 两万零二百二十
                 result.append(alt_2_char)
             else:
